@@ -43,9 +43,17 @@ df.loc[df.sample(frac=0.02).index, 'region'] = None
 dups = df.sample(frac=0.01)
 df = pd.concat([df, dups], ignore_index=True)
 df['region'] = df['region'].apply(lambda x: x.lower() if pd.notnull(x) and random.random() < 0.1 else x)
+
+# Save Parquet first while unit_price is purely numeric
+os.makedirs('data', exist_ok=True)
+parquet_path = 'data/orders.parquet'
+df.to_parquet(parquet_path, index=False)
+
+# Inject text prices for CSV
 df['unit_price'] = df['unit_price'].apply(lambda x: f"₱{x:,.2f}" if random.random() < 0.05 else x)
 
-os.makedirs('data', exist_ok=True)
-df.to_csv('data/orders.csv', index=False)
-df.to_parquet('data/orders.parquet', index=False)
-print("Data generated successfully!")
+csv_path = 'data/orders.csv'
+df.to_csv(csv_path, index=False)
+
+print(f"CSV Size: {os.path.getsize(csv_path) / (1024*1024):.2f} MB")
+print(f"Parquet Size: {os.path.getsize(parquet_path) / (1024*1024):.2f} MB")
